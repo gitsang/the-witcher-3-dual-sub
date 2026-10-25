@@ -219,8 +219,13 @@ class EndToEnd(unittest.TestCase):
         decoded = w3strings.read(self.out / build_mod.MOD_NAME / "content" / "content0" / "cn.w3strings")
         self.assertEqual(decoded.text_map()[1], "狼与猫。<br>The wolf and the cat.")
         self.assertEqual(len(decoded), 3)   # 完整替换：条目一个不少
-        dlc = w3strings.read(self.out / build_mod.MOD_NAME / "content" / "dlc" / "dlc1" / "content" / "cn.w3strings")
-        self.assertEqual(dlc.text_map()[11], "来吧，罗契。<br>Come on, Roche.")
+        # 目录名大小写跟着游戏实际目录走（Windows 是 DLC，Linux 大小写敏感），
+        # 所以按 dlc1 定位而不是拼死路径。
+        produced = self.out / build_mod.MOD_NAME
+        dlc_files = [path for path in produced.rglob("cn.w3strings")
+                     if "dlc1" in path.as_posix().casefold()]
+        self.assertEqual(len(dlc_files), 1)
+        self.assertEqual(w3strings.read(dlc_files[0]).text_map()[11], "来吧，罗契。<br>Come on, Roche.")
 
     def test_same_language_rejected(self):
         with self.assertRaises(build_mod.BuildError):
